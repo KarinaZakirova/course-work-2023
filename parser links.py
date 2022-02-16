@@ -14,5 +14,5 @@ def get_fanfic(linkfan):
             # file.write(element.get_attribute('innerText'))
     driver.close()
     driver.quit()
-for i in range(1, 42):
+for i in range(1, 100):
     get_fanfic(linkfan.format(i))
