@@ -11,6 +11,6 @@ def get_fanfic(linkfan):
             file.write(element.get_attribute('innerText'))
     driver.close()
     driver.quit()
-with open("in.txt") as file:
+with open("links.txt") as file:
     for line in file.readlines():
-        get_fanfic(line.strip())
+        get_fanfic(line.strip()) 

@@ -9,10 +9,10 @@ def get_fanfic(linkfan):
         elements = driver.find_elements_by_class_name("visit-link")
         with open("links.txt", "w") as file:
             for element in elements:
-                file.write(element.get_attribute('href'))
+                file.write(element.get_attribute('href') + "\n") 
         # with open("fanfics/" + linkfan.split("/")[-1] + ".txt", "w") as file:
             # file.write(element.get_attribute('innerText'))
     driver.close()
     driver.quit()
-for i in range(1, 10):
+for i in range(1, 42):
     get_fanfic(linkfan.format(i))
