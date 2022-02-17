@@ -1,7 +1,5 @@
 import spacy 
 nlp = spacy.load("ru_core_news_sm")
-a = """
-20 декабря Дмитрий Анатольевич посетил Саяно-Шушенскую ГЭС и поговорил с её начальством."""
 
 def named_entity_recognition(a):
     doc = nlp(a)
@@ -27,6 +25,6 @@ for i in named_entities:
         occurences[i] = 0
     occurences[i] += 1
 for key, value in sorted(occurences.items(), key=lambda x: x[1], reverse=True):
-    print(key, value)
+    print(key, value, sep="\t")
 
 
