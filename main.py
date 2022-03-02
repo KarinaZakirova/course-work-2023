@@ -19,6 +19,7 @@ def get_links(seed):
         elements = driver.find_elements_by_class_name("visit-link")
         # extract links from tags
         links = [i.get_attribute('href') for i in elements]
+        links = [link for link in links if link]
     driver.close()
     driver.quit()
     return links
@@ -28,7 +29,7 @@ def get_file_path(link):
     return "fanfics/" + re.sub(r"[^0-9]+", "", link) + ".txt" 
 
 
-def get_text(link):
+def get_text_or_links(link):
     driver = uc.Chrome()
     if isfile(get_file_path(link)):
         return
@@ -44,8 +45,8 @@ def get_text(link):
         return text
     except NoSuchElementException:
         # page contains no text
-        print(link, "no text found")
-        return ""
+        print(link, "no text found. attempting links")
+        return get_links(link)
 
 
 def named_entity_recognition(a):
@@ -62,9 +63,13 @@ def scrape_for_fanfics(pagecount=2):
     seeds = [query.format(page) for page in range(1, pagecount)]
     for seed in seeds:
         links.extend(get_links(seed))
-    for link in links:
-        text = get_text(link)
-        if text:
+    while links:
+        link = links.pop()
+        print(link)
+        text = get_text_or_links(link)
+        if isinstance(text, list):
+            links.extend(text)
+        elif text:
             with open(get_file_path(link), "w", encoding="utf8") as file:
                 file.write(text)
 
