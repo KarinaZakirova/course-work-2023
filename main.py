@@ -91,6 +91,16 @@ def show_ner():
     for key, value in frequency(named_entities):
         print(f"{key}\t{value}")
 
+
+def ner_to_csv():
+    named_entities = []
+    for filename in listdir("fanfics"):
+        with open("fanfics/" + filename, encoding='utf8') as file:
+            named_entities.extend(map(lambda x: (filename, x), named_entity_recognition(file.read())))
+    with open("out.csv", "w", encoding="windows-1251") as file:
+        for fanfic, entity in named_entities:
+            file.write(f"{fanfic},{entity}\n")
+
 if __name__ == "__main__":
-    scrape_for_fanfics()
-    show_ner()
+    # scrape_for_fanfics()
+    ner_to_csv()
