@@ -1,14 +1,15 @@
 import undetected_chromedriver.v2 as uc
 from selenium.common.exceptions import NoSuchElementException
-from os.file import isfile
+from os.path import isfile
 from os import listdir
 import spacy
+import re
 
 nlp = spacy.load("ru_core_news_sm")
 query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&transl=1&likes_min=&likes_max=&rewards_min=&date_create_min=2022-01-05&date_create_max=2022-02-05&date_update_min=2022-01-05&date_update_max=2022-02-05&title=&sort=1&rnd=152877722&find=Найти%21&p={}"
 
 
-def find_links(seed):
+def get_links(seed):
     driver = uc.Chrome()
     with driver:
         # open the page with more links
@@ -24,13 +25,13 @@ def find_links(seed):
 
 
 def get_file_path(link):
-    return "fanfics/" + link.split("/")[-1] + ".txt"
+    return "fanfics/" + re.sub(r"[^0-9]+", "", link) + ".txt" 
 
 
 def get_text(link):
     driver = uc.Chrome()
     if isfile(get_file_path(link)):
-    	return
+        return
     with driver:
         # open the page with text
         driver.get(link)
@@ -57,10 +58,13 @@ def named_entity_recognition(a):
 
 def scrape_for_fanfics(pagecount=2):
     # collect links to fanfics
-    links = [get_links(query.format(page)) for page in range(1, pagecount)]
+    links = []
+    seeds = [query.format(page) for page in range(1, pagecount)]
+    for seed in seeds:
+        links.extend(get_links(seed))
     for link in links:
-    	text = get_text(link)
-    	if text:
+        text = get_text(link)
+        if text:
             with open(get_file_path(link), "w", encoding="utf8") as file:
                 file.write(text)
 
@@ -82,6 +86,6 @@ def show_ner():
     for key, value in frequency(named_entities):
         print(f"{key}\t{value}")
 
-if name == "__main__":
-	scrape_for_fanfics()
-	show_ner()
+if __name__ == "__main__":
+    scrape_for_fanfics()
+    show_ner()
