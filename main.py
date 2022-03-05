@@ -4,6 +4,7 @@ from os.path import isfile
 from os import listdir
 import spacy
 import re
+from itertools import zip_longest
 
 nlp = spacy.load("ru_core_news_sm")
 query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&transl=1&likes_min=&likes_max=&rewards_min=&date_create_min=2022-01-05&date_create_max=2022-02-05&date_update_min=2022-01-05&date_update_max=2022-02-05&title=&sort=1&rnd=152877722&find=Найти%21&p={}"
@@ -53,7 +54,8 @@ def named_entity_recognition(a):
     doc = nlp(a)
     named_entities = []
     for ent in doc.ents:
-        named_entities.append(ent.text)        
+        if ent.label_ == "PER":
+            named_entities.append(ent.text.replace('\n', " "))
     return named_entities
 
 
@@ -96,11 +98,12 @@ def ner_to_csv():
     named_entities = []
     for filename in listdir("fanfics"):
         with open("fanfics/" + filename, encoding='utf8') as file:
-            named_entities.extend(map(lambda x: (filename, x), named_entity_recognition(file.read())))
+            named_entities.append([filename])
+            named_entities[-1].extend(named_entity_recognition(file.read()))
     with open("out.csv", "w", encoding="windows-1251") as file:
-        for fanfic, entity in named_entities:
-            file.write(f"{fanfic},{entity}\n")
+        for row in zip_longest(*named_entities, fillvalue=""):
+            file.write(",".join(row) + "\n")
 
 if __name__ == "__main__":
-    # scrape_for_fanfics()
+    # scrape_for_fanfics(6)
     ner_to_csv()
