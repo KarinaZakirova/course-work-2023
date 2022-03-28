@@ -100,8 +100,9 @@ def ner_to_csv():
         with open("fanfics/" + filename, encoding='utf8') as file:
             named_entities.append([filename])
             named_entities[-1].extend(named_entity_recognition(file.read()))
-    with open("out.csv", "w", encoding="windows-1251") as file:
+    with open("out.csv", "w", encoding="utf8") as file:
         for row in zip_longest(*named_entities, fillvalue=""):
+            print(",".join(row) + "\n")
             file.write(",".join(row) + "\n")
 
 if __name__ == "__main__":
