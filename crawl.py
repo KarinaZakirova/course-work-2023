@@ -36,27 +36,41 @@ class Crawler:
         print(len(self.links))
         print(len(self.texts))
 
-    def get_seeds(self, count):
+    def add_links(self, links):
+        # Skip links to fanfics that have already been scraped.
+        new_links = [link for link in links if not isfile(get_file_path(link))]
+        self.links.extend(new_links)
+        logger.debug(f"added {len(new_links)} links, total count: {len(self.links)}")
+
+    def add_text(self, text):
         """
-        Turn the query template into several search page links,
-        which contain links to fanfics.
+        New text has been received. Count the text and save it on the disk.
         """
-        return [self.query.format(page) for page in range(1, count)]
+        self.texts.append(text)
+        with open(get_file_path(link), "w", encoding="utf-8") as f:
+            f.write(text)
+
+        logger.debug(f"added text, total count: {len(self.texts)}")
+
+    def get_new_seed(self):
+        """
+        Yields a new link to a search page containing a list of fanfics.
+        """
+        for page in range(1, 100):
+            logger.debug(f"get new seed #{page}")
+            yield self.query.format(page)
 
     def run(self, pagecount=2):
         logger.debug(f"started running")
-        for seed in self.get_seeds(pagecount):
-            self.links.extend(self.get_links(seed))
-        logger.debug(f"links: {len(self.links)}")
-        while self.links:
+        while True:
+            if not self.links:
+                # Ran out of fanfic links.
+                # Need to get new ones from Search page.
+                self.get_links(next(self.get_new_seed()))
+                continue
             link = self.links.pop()
             logger.debug(f"{link}")
-            text = self.get_text_or_links(link)
-            if isinstance(text, list):
-                self.links.extend(text)
-            elif text:
-                with open(get_file_path(link), "w", encoding="utf8") as file:
-                    file.write(text)
+            self.get_text_or_links(link)
 
     def get_links(self, seed):
         logger.debug(f"opening page for\t{seed}")
@@ -72,12 +86,11 @@ class Crawler:
             links = [link for link in links if link]
         logger.debug(f"found elements for\t{seed}")
         # self.driver.close()
-        return links
+
+        self.add_links(links)
 
     def get_text_or_links(self, link):
         logger.debug(f"started chrome for\t{link}")
-        if isfile(get_file_path(link)):
-            return
         with self.driver:
             # open the page with text
             self.driver.get(link)
@@ -88,11 +101,13 @@ class Crawler:
                 text = element.get_attribute('innerText')
             # self.driver.close()
             logger.debug(f"found text, quit for\t{link}")
-            return text
+
+            self.add_text(text)
+
         except NoSuchElementException:
             # page contains no text
             logger.debug(f"no text found, links for \t{link}")
-            return self.get_links(link)
+            self.get_links(link)
 
 def get_file_path(link):
     return "fanfics/" + re.sub(r"[^0-9]+", "", link) + ".txt" 
@@ -118,5 +133,5 @@ logger.addHandler(ch)
 if __name__ == "__main__":
     logger.debug(f"start")
     with Crawler() as crawler:
-        crawler.run(2)
+        crawler.run(3)
     # ner_to_csv()
