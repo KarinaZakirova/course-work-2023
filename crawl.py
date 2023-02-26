@@ -1,11 +1,14 @@
 import undetected_chromedriver.v2 as uc
-from selenium.common.exceptions import NoSuchElementException
+
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from selenium.common.exceptions import NoSuchElementException
+
 from os.path import isfile
 from os import listdir
-import spacy
 import re
-from itertools import zip_longest
 
 import logging
 
@@ -13,7 +16,7 @@ import logging
 class Crawler:
     def __init__(self):
         self.driver = None
-        self.query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&ratings%5B%5D=5&ratings%5B%5D=6&transl=1&likes_min=&likes_max=&rewards_min=&date_create_min=2023-02-25&date_create_max=2023-02-25&date_update_min=2023-02-25&date_update_max=2023-02-25&title=&sort=1&rnd=679840539&find=%D0%9D%D0%B0%D0%B9%D1%82%D0%B8%21&p={}"
+        self.query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&ratings%5B%5D=5&transl=1&likes_min=&likes_max=&rewards_min=&date_create_min=2023-02-26&date_create_max=2023-02-26&date_update_min=2023-02-26&date_update_max=2023-02-26&title=&sort=1&rnd=1296979882&find=%D0%9D%D0%B0%D0%B9%D1%82%D0%B8%21&p={}"
         self.links = []
 
     def __enter__(self):
@@ -73,6 +76,9 @@ class Crawler:
         logger.debug(f"loading - {link}")
         with self.driver:
             self.driver.get(link)
+            # element = WebDriverWait(self.driver, 10).until(
+            #     EC.presence_of_element_located((By.TAG_NAME, "article"))
+            # )
         logger.debug(f"loaded - {link}")
 
     def get_links(self, seed):
