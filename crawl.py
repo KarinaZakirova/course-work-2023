@@ -158,5 +158,5 @@ def new_logger(name):
     return logger
 
 if __name__ == "__main__":
-    crawler = Crawler(4, 10000)
+    crawler = Crawler(4, 20000)
     crawler.run()
