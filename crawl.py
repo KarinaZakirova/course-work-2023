@@ -22,7 +22,7 @@ class Crawler:
         self.text_limit = text_limit
         self.links = []
         self.tried_links = set()
-        self.query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&ratings%5B%5D=5&transl=1&tags_include%5B%5D=1669&likes_min=&likes_max=&rewards_min=&date_create_min=2023-02-26&date_create_max=2023-02-26&date_update_min=2023-02-26&date_update_max=2023-02-26&title=&sort=1&rnd=789441346&find=%D0%9D%D0%B0%D0%B9%D1%82%D0%B8%21&p={}"
+        self.query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&ratings%5B%5D=5&transl=1&tags_include%5B%5D=1669&likes_min=&likes_max=&rewards_min=&date_create_min=2023-02-27&date_create_max=2023-02-27&date_update_min=2023-02-27&date_update_max=2023-02-27&title=&sort=4&rnd=1018693467&find=%D0%9D%D0%B0%D0%B9%D1%82%D0%B8%21&p={}"
         self.query_page = 0
 
     def get_new_seed(self):
