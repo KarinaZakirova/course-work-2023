@@ -1,72 +1,162 @@
 import undetected_chromedriver.v2 as uc
-from selenium.common.exceptions import NoSuchElementException
+
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from selenium.common.exceptions import NoSuchElementException
+
 from os.path import isfile
 from os import listdir
-import spacy
 import re
-from itertools import zip_longest
 
-nlp = spacy.load("ru_core_news_lg")
-query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&transl=1&likes_min=&likes_max=&rewards_min=&date_create_min=2022-01-05&date_create_max=2022-02-05&date_update_min=2022-01-05&date_update_max=2022-02-05&title=&sort=1&rnd=152877722&find=Найти%21&p={}"
+import logging
+
+from threading import Thread
 
 
-def get_links(seed):
-    driver = uc.Chrome()
-    with driver:
-        # open the page with more links
-        driver.get(seed)
-    with driver:
-        # find link tags
-        elements = driver.find_elements(By.CLASS_NAME, "visit-link")
-        # extract links from tags
-        links = [i.get_attribute('href') for i in elements]
-        links = [link for link in links if link]
-    driver.close()
-    driver.quit()
-    return links
+class Crawler:
+    def __init__(self, worker_count, text_limit):
+        self.workers = [Worker(self, index) for index in range(worker_count)]
+        self.logger = new_logger("crawler")
+        self.text_limit = text_limit
+        self.links = []
+        self.tried_links = set()
+        self.query = "https://ficbook.net/find?fandom_filter=originals&fandom_group_id=1&pages_range=1&pages_min=&pages_max=&ratings%5B%5D=5&transl=1&tags_include%5B%5D=1669&likes_min=&likes_max=&rewards_min=&date_create_min=2023-02-27&date_create_max=2023-02-27&date_update_min=2023-02-27&date_update_max=2023-02-27&title=&sort=4&rnd=1018693467&find=%D0%9D%D0%B0%D0%B9%D1%82%D0%B8%21&p={}"
+        self.query_page = 0
 
+    def get_new_seed(self):
+        """
+        Yields a new link to a search page containing a list of fanfics.
+        """
+        self.query_page += 1
+        self.logger.debug(f"get new seed #{self.query_page}")
+        return self.query.format(self.query_page)
+
+    def run(self):
+        self.logger.debug(f"start running")
+        for index, worker in enumerate(self.workers):
+            Thread(target = self.run_job_queue, args=(worker,), name=f"W_{index}").start()
+
+    def run_job_queue(self, worker):
+        worker.start()
+        while len(listdir('fanfics/')) < self.text_limit:
+            if not self.links:
+                # Ran out of fanfic links.
+                # Need to get new ones from Search page.
+                worker.get_links(self.get_new_seed())
+                continue
+            worker.get_text_or_links(self.get_link())
+
+    def get_link(self):
+        link = self.links.pop()
+        self.tried_links.add(link)
+        return link
+
+
+class Worker:
+    def __init__(self, crawler, index):
+        self.crawler = crawler
+        self.driver = None
+        self.logger = new_logger(f"worker{index}")
+
+    def start(self):
+        self.logger.debug(f"start chrome")
+        self.driver = uc.Chrome()
+        self.logger.debug(f"started chrome")
+
+    def load(self, link):
+        if self.driver.current_url == link:
+            self.logger.debug(f"same page, skip reloading - {link}")
+            return
+        self.logger.debug(f"loading - {link}")
+        with self.driver:
+            self.driver.get(link)
+            # element = WebDriverWait(self.driver, 10).until(
+            #     EC.presence_of_element_located((By.TAG_NAME, "article"))
+            # )
+        self.logger.debug(f"loaded - {link}")
+
+    def add_links(self, links):
+        """
+        Skip links to fanfics that have already been scraped.
+        """
+        count = 0
+        for link in links:
+            if isfile(get_file_path(link)):
+                # Already downloaded.
+                continue
+            if link in self.crawler.links:
+                # Already queued.
+                continue
+            if link in self.crawler.tried_links:
+                # Already crawled before.
+                # (Might seem irrelevant, but likely helpful for fanfics with pages in them.)
+                continue
+            self.crawler.links.append(link)
+            count += 1
+        self.logger.debug(f"learned {count} links (total: {len(self.crawler.links)})")
+
+    def add_text(self, link, text):
+        """
+        New text has been received. Count the text and save it on the disk.
+        """
+        with open(get_file_path(link), "w", encoding="utf-8") as f:
+            f.write(text)
+
+        self.logger.debug(f"added text (total: {len(listdir('fanfics/'))})")
+
+    def get_links(self, seed):
+        self.load(seed)
+        with self.driver:
+            # find link tags
+            elements = self.driver.find_elements(By.CLASS_NAME, "visit-link")
+            # extract links from tags
+            links = [i.get_attribute('href') for i in elements]
+            links = [link for link in links if link]
+        self.logger.debug(f"found links - {seed}")
+        # self.driver.close()
+        self.add_links(links)
+
+    def get_text_or_links(self, link):
+        self.load(link)
+        try:
+            with self.driver:
+                element = self.driver.find_element(by="id", value="content")
+                text = element.get_attribute('innerText')
+            # self.driver.close()
+            self.logger.debug(f"found text - {link}")
+            self.add_text(link, text)
+
+        except NoSuchElementException:
+            # page contains no text
+            self.logger.debug(f"no text, trying links - {link}")
+            self.get_links(link)
 
 def get_file_path(link):
     return "fanfics/" + re.sub(r"[^0-9]+", "", link) + ".txt" 
 
 
-def get_text_or_links(link):
-    driver = uc.Chrome()
-    if isfile(get_file_path(link)):
-        return
-    with driver:
-        # open the page with text
-        driver.get(link)
-    try:
-        with driver:
-            element = driver.find_element(by="id", value="content")
-            text = element.get_attribute('innerText')
-        driver.close()
-        driver.quit()
-        return text
-    except NoSuchElementException:
-        # page contains no text
-        print(link, "no text found. attempting links")
-        return get_links(link)
+def new_logger(name):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
 
+    # create console handler and set level to debug
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
 
-def scrape_for_fanfics(pagecount=2):
-    # collect links to fanfics
-    links = []
-    seeds = [query.format(page) for page in range(1, pagecount)]
-    for seed in seeds:
-        links.extend(get_links(seed))
-    while links:
-        link = links.pop()
-        print(link)
-        text = get_text_or_links(link)
-        if isinstance(text, list):
-            links.extend(text)
-        elif text:
-            with open(get_file_path(link), "w", encoding="utf8") as file:
-                file.write(text)
+    # create formatter
+    # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(message)s')
+
+    # add formatter to ch
+    ch.setFormatter(formatter)
+
+    # add ch to logger
+    logger.addHandler(ch)
+
+    return logger
 
 if __name__ == "__main__":
-    scrape_for_fanfics(2)
-    # ner_to_csv()
+    crawler = Crawler(4, 20000)
+    crawler.run()

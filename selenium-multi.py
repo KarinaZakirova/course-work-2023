@@ -10,20 +10,21 @@ urls = [
         'http://www.bbc.com',
         ]
 
+boo = []
+
 def open_url(url):
     print(f"Openning url: {url}")
     options = Options()
     browser = webdriver.Chrome(options=options)
     browser.get(url)
-    browser.implicitly_wait(10)
+    # browser.implicitly_wait(10)
     print(f"Done url: {url}")
-    time.sleep(30)
+    # time.sleep(30)
+    boo.append(url)
+    print(boo)
     browser.quit()
     print(f"Exited url: {url}")
 
-def callback():
-  print("Done")
-
 for url in urls:
-    t = threading.Thread(target = open_url, args=(url,), name=f"Openner-{url}", on_close = callback)
+    t = threading.Thread(target = open_url, args=(url,), name=f"Openner-{url}")
     t.start()
