@@ -72,6 +72,10 @@ def corpus_markup():
         if filename in listdir("ner/"):
             continue
 
+        # Read fanfic
+        with open("fanfics/" + filename, encoding='utf8') as f:
+            text = f.read()
+
         # Load entities
         with open("entities/" + filename, encoding="utf-8") as f:
             named_entities = f.read().split("\n")
@@ -90,5 +94,5 @@ def corpus_markup():
     #         file.write(",".join(row) + "\n")
 
 if __name__ == "__main__":
-    extract_entities()
-    # corpus_markup()
+    # extract_entities()
+    corpus_markup()
