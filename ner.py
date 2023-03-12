@@ -12,6 +12,7 @@ import csv
 
 # nlp = spacy.load("ru_core_news_lg")
 
+
 def named_entity_recognition(a):
     doc = nlp(a)
     named_entities = []
@@ -165,10 +166,38 @@ def knowledge_graph():
                 write.writerow([tag[0], status, tag[1]])
 
 
+def clean_entities():
+    mystem = Mystem()
+    for index, filename in enumerate(listdir("entities/")):
 
+        clean_entities = []
+
+        print(index, "cleaning entities:", filename)
+
+        if filename in listdir("clean-entities/"):
+            continue
+
+        # Load entities
+        with open("entities/" + filename, encoding="utf-8") as f:
+            named_entities = f.read().split("\n")
+
+        with open("russian.txt", encoding="utf-8") as f:
+            russian = {word for word in f.read().split("\n") if word and word[0].lower() == word[0]}
+
+        for entity in named_entities:
+            if not entity:
+                continue
+            lemma = " ".join(mystem.lemmatize(entity))
+            if entity.lower() not in russian:
+                clean_entities.append(entity)
+
+        # Save entities
+        with open("clean-entities/" + filename, "w", encoding="utf-8") as f:
+            f.write("\n".join(clean_entities))
 
 
 if __name__ == "__main__":
     # extract_entities()
     # corpus_markup()
-    knowledge_graph()
+    # knowledge_graph()
+    clean_entities()
