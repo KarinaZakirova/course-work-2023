@@ -106,6 +106,43 @@ def corpus_markup(
     #         print(",".join(row) + "\n")
     #         file.write(",".join(row) + "\n")
 
+def corpus_reformat(
+        text_dir="fanfics/",
+        entity_dir="entities-manual/",
+    ):
+    sentences = []
+    for index, filename in enumerate(listdir(entity_dir)):
+        # print(index, "reading:", filename)
+
+        # Read fanfic as sentences
+        with open(text_dir + filename, encoding='utf8') as f:
+            text = re.split('\.|!|\?', f.read())
+
+        # Load entities
+        with open(entity_dir + filename, encoding="utf-8") as f:
+            named_entities = f.read().split("\n")
+
+
+        for sentence in text:
+            clean_sentence = sentence
+            entities = []
+
+            ranges = set()
+
+            for entity in named_entities:
+            # tags = [tag for tag in re.findall("\<(.*?)\>", sentence) if tag]
+                for match in re.finditer(entity, sentence):
+                    new_ranges = set(range(*match.span()))
+                    if new_ranges & ranges:
+                        # oh no we intersect
+                        continue
+                    # oh cool we don't
+                    ranges.update(new_ranges)
+                    entities.append((*match.span(), "PER"))
+            if entities:
+                sentences.append((sentence, {"entities": entities}))
+    return sentences
+
 def knowledge_graph(
         text_dir="ner/",
         entity_dir="entities/",
@@ -215,4 +252,5 @@ if __name__ == "__main__":
     # corpus_markup()
     # knowledge_graph()
     # clean_entities()
-    corpus_markup(text_dir="fanfics/", entity_dir="entities-manual/", out_dir="ner-manual/")
+    # corpus_markup(text_dir="fanfics/", entity_dir="entities-manual/", out_dir="ner-manual/")
+    corpus_reformat()
