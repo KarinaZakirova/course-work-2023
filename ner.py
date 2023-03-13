@@ -11,6 +11,7 @@ from collections import Counter
 import csv
 
 # nlp = spacy.load("ru_core_news_lg")
+nlp = spacy.load("training/output/model-last")
 
 
 def named_entity_recognition(a):
@@ -253,4 +254,6 @@ if __name__ == "__main__":
     # knowledge_graph()
     # clean_entities()
     # corpus_markup(text_dir="fanfics/", entity_dir="entities-manual/", out_dir="ner-manual/")
-    corpus_reformat()
+    # corpus_reformat()
+    extract_entities(out_dir="entities-trained/")
+    corpus_markup(entity_dir="entities-trained/")
