@@ -53,39 +53,46 @@ def show_ner():
         print(f"{key}\t{value}")
 
 
-def extract_entities():
-    for index, filename in enumerate(listdir("fanfics/")):
+def extract_entities(
+        in_dir="fanfics/",
+        out_dir="entities/",
+    ):
+    for index, filename in enumerate(listdir(in_dir)):
         print(index, "extracting entities:", filename)
 
-        if filename in listdir("entities/"):
+        if filename in listdir(out_dir):
             continue
 
         # Read fanfic, extract named entities
-        with open("fanfics/" + filename, encoding='utf8') as f:
+        with open(in_dir + filename, encoding='utf8') as f:
             text = f.read()
             named_entities = sorted(set(named_entity_recognition(text)), key=len, reverse=True)
 
         # Save entities
-        with open("entities/" + filename, "w", encoding="utf-8") as f:
+        with open(out_dir + filename, "w", encoding="utf-8") as f:
             f.write("\n".join(named_entities))
 
-def corpus_markup():
-    for index, filename in enumerate(listdir("entities/")):
+def corpus_markup(
+        text_dir="fanfics/",
+        entity_dir="entities/",
+        out_dir="ner/",
+    ):
+    for index, filename in enumerate(listdir(entity_dir)):
         print(index, "adding markup:", filename)
 
-        if filename in listdir("ner/"):
+        if filename in listdir(out_dir):
             continue
 
         # Read fanfic
-        with open("fanfics/" + filename, encoding='utf8') as f:
+        with open(text_dir + filename, encoding='utf8') as f:
             text = f.read()
 
         # Load entities
-        with open("entities/" + filename, encoding="utf-8") as f:
+        with open(entity_dir + filename, encoding="utf-8") as f:
             named_entities = f.read().split("\n")
 
         # Use entities to add markup
-        with open("ner/" + filename, "w", encoding="utf-8") as f:
+        with open(out_dir + filename, "w", encoding="utf-8") as f:
             for entity in named_entities:
                 # Add brackets around every entity.
                 # Ordered in the correct way to avoid doubling up or incomplete selections
@@ -99,23 +106,27 @@ def corpus_markup():
     #         print(",".join(row) + "\n")
     #         file.write(",".join(row) + "\n")
 
-def knowledge_graph():
+def knowledge_graph(
+        text_dir="ner/",
+        entity_dir="entities/",
+        out_dir="graph/",
+    ):
     mystem = Mystem()
-    for key, group in groupby(listdir("entities/"), lambda x: x[:7]):
+    for key, group in groupby(listdir(entity_dir), lambda x: x[:7]):
         group = list(group)
         # if len(group) > 1:
         #     print(key, len(list(group)))
         print("===============================")
         print(key)
 
-        if key in listdir("graph/"):
+        if key in listdir(out_dir):
             continue
 
         multipage_tags = []
         for filename in group:
             # print("===============================")
             # print(key, filename)
-            with open("ner/" + filename, "r", encoding="utf-8") as f:
+            with open(text_dir + filename, "r", encoding="utf-8") as f:
                 text = re.split('\.|!|\?', f.read())
                 for sentence in text:
                     lemmatised = "".join(mystem.lemmatize(sentence))
@@ -139,7 +150,7 @@ def knowledge_graph():
 
         tag_groups = []
         for filename in group:
-            with open("ner/" + filename, "r", encoding="utf-8") as f:
+            with open(text_dir + filename, "r", encoding="utf-8") as f:
                 text = re.split('\.|!|\?', f.read())
                 for sentence in text:
                     lemmatised = "".join(mystem.lemmatize(sentence))
@@ -150,7 +161,7 @@ def knowledge_graph():
                         tag_groups.append(tuple(relevant_tags))
 
         counted_tag_groups = Counter(tag_groups)
-        with open("graph/" + key, "w", encoding="utf-8") as f:
+        with open(out_dir + key, "w", encoding="utf-8") as f:
             write = csv.writer(f, dialect='unix')
             for index, tag in enumerate(sorted(counted_tag_groups, key=counted_tag_groups.get, reverse=True)):
                 count = counted_tag_groups[tag]
@@ -166,19 +177,22 @@ def knowledge_graph():
                 write.writerow([tag[0], status, tag[1]])
 
 
-def clean_entities():
+def clean_entities(
+        in_dir="entities/",
+        out_dir="clean-entities/",
+    ):
     mystem = Mystem()
-    for index, filename in enumerate(listdir("entities/")):
+    for index, filename in enumerate(listdir(in_dir)):
 
         clean_entities = []
 
         print(index, "cleaning entities:", filename)
 
-        if filename in listdir("clean-entities/"):
+        if filename in listdir(out_dir):
             continue
 
         # Load entities
-        with open("entities/" + filename, encoding="utf-8") as f:
+        with open(in_dir + filename, encoding="utf-8") as f:
             named_entities = f.read().split("\n")
 
         with open("russian.txt", encoding="utf-8") as f:
@@ -192,7 +206,7 @@ def clean_entities():
                 clean_entities.append(entity)
 
         # Save entities
-        with open("clean-entities/" + filename, "w", encoding="utf-8") as f:
+        with open(out_dir + filename, "w", encoding="utf-8") as f:
             f.write("\n".join(clean_entities))
 
 
@@ -200,4 +214,5 @@ if __name__ == "__main__":
     # extract_entities()
     # corpus_markup()
     # knowledge_graph()
-    clean_entities()
+    # clean_entities()
+    corpus_markup(text_dir="fanfics/", entity_dir="entities-manual/", out_dir="ner-manual/")
