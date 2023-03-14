@@ -2,7 +2,7 @@ from os import listdir
 
 def diff(
         truth_dir="entities/manual-2/",
-        test_dir="entities/sm-clean/",
+        test_dir="entities/ourmodel-clean/",
     ):
 
     true_positives = 0
@@ -44,5 +44,13 @@ def diff(
     print("precision:", round(100 * true_positives / (true_positives + false_positives), 2), "%")
     print("recall:", round(100 * true_positives / (true_positives + false_negatives), 2), "%")
 
+def diff_all(
+        truth_dir="entities/manual-2/",
+    ):
+    for folder in listdir("entities/"):
+        test_dir = f"entities/{folder}/"
+        if not test_dir == truth_dir:
+            diff(truth_dir, test_dir)
+
 if __name__ == "__main__":
-    diff()
+    diff_all()

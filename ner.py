@@ -262,4 +262,4 @@ if __name__ == "__main__":
     # corpus_reformat()
     #extract_entities(out_dir="entities-trained/")
     #corpus_markup(entity_dir="entities-trained/")
-    clean_entities(in_dir="entities/sm/", out_dir="entities/sm-clean/")
+    clean_entities(in_dir="entities/ourmodel/", out_dir="entities/ourmodel-clean/")
