@@ -2,7 +2,7 @@ from os import listdir
 
 def diff(
         truth_dir="entities/manual-2/",
-        test_dir="entities/ourmodel/",
+        test_dir="entities/sm-clean/",
     ):
 
     true_positives = 0

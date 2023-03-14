@@ -10,8 +10,9 @@ from pymystem3 import Mystem
 from collections import Counter
 import csv
 
+nlp = spacy.load("ru_core_news_sm")
 # nlp = spacy.load("ru_core_news_lg")
-nlp = spacy.load("training/output/model-last")
+# nlp = spacy.load("training/output/model-last")
 
 
 def named_entity_recognition(a):
@@ -223,7 +224,7 @@ def clean_entities(
     for index, filename in enumerate(listdir(in_dir)):
 
         clean_entities = []
-        dirty_entities = []
+        # dirty_entities = []
 
         print(index, "cleaning entities:", filename)
 
@@ -243,16 +244,17 @@ def clean_entities(
             lemma = " ".join(mystem.lemmatize(entity))
             if entity.lower() not in russian:
                 clean_entities.append(entity)
-            else:
-                dirty_entities.append(entity)
+            # else:
+            #     dirty_entities.append(entity)
 
         # Save entities
         with open(out_dir + filename, "w", encoding="utf-8") as f:
-            f.write("\n".join(clean_entities) + "\n\n" + "\n".join(dirty_entities))
+            # f.write("\n".join(clean_entities) + "\n\n" + "\n".join(dirty_entities))
+            f.write("\n".join(clean_entities))
 
 
 if __name__ == "__main__":
-    # extract_entities()
+    # extract_entities(out_dir="entities/sm/")
     # corpus_markup()
     # knowledge_graph()
     # clean_entities()
@@ -260,4 +262,4 @@ if __name__ == "__main__":
     # corpus_reformat()
     #extract_entities(out_dir="entities-trained/")
     #corpus_markup(entity_dir="entities-trained/")
-    clean_entities(in_dir="entities/lg/", out_dir="entities/lg-clean-2/")
+    clean_entities(in_dir="entities/sm/", out_dir="entities/sm-clean/")
