@@ -145,6 +145,18 @@ def corpus_reformat(
                 sentences.append((sentence, {"entities": entities}))
     return sentences
 
+
+def stats(in_dir="fanfics/"):
+    groups = list(groupby(listdir(in_dir), lambda x: x[:7]))
+    print("Fanfic count:", len(groups))
+    print("File count:", len(listdir(in_dir)))
+    wc = 0
+    for filename in listdir(in_dir):
+        with open(in_dir + filename, "r", encoding="utf-8") as f:
+            wc += len(f.read().split())
+    print("Word count:", wc)
+
+
 def knowledge_graph(
         text_dir="ner/",
         entity_dir="entities/",
@@ -258,8 +270,9 @@ if __name__ == "__main__":
     # corpus_markup()
     # knowledge_graph()
     # clean_entities()
-    corpus_markup(text_dir="fanfics/", entity_dir="entities/sm/", out_dir="ner/sm/")
+    # corpus_markup(text_dir="fanfics/", entity_dir="entities/sm/", out_dir="ner/sm/")
     # corpus_reformat()
     #extract_entities(out_dir="entities-trained/")
     #corpus_markup(entity_dir="entities-trained/")
     #clean_entities(in_dir="entities/ourmodel/", out_dir="entities/ourmodel-clean/")
+    stats()
