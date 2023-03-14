@@ -223,6 +223,7 @@ def clean_entities(
     for index, filename in enumerate(listdir(in_dir)):
 
         clean_entities = []
+        dirty_entities = []
 
         print(index, "cleaning entities:", filename)
 
@@ -242,10 +243,12 @@ def clean_entities(
             lemma = " ".join(mystem.lemmatize(entity))
             if entity.lower() not in russian:
                 clean_entities.append(entity)
+            else:
+                dirty_entities.append(entity)
 
         # Save entities
         with open(out_dir + filename, "w", encoding="utf-8") as f:
-            f.write("\n".join(clean_entities))
+            f.write("\n".join(clean_entities) + "\n\n" + "\n".join(dirty_entities))
 
 
 if __name__ == "__main__":
@@ -255,5 +258,6 @@ if __name__ == "__main__":
     # clean_entities()
     # corpus_markup(text_dir="fanfics/", entity_dir="entities-manual/", out_dir="ner-manual/")
     # corpus_reformat()
-    extract_entities(out_dir="entities-trained/")
-    corpus_markup(entity_dir="entities-trained/")
+    #extract_entities(out_dir="entities-trained/")
+    #corpus_markup(entity_dir="entities-trained/")
+    clean_entities(in_dir="entities/lg/", out_dir="entities/lg-clean-2/")
