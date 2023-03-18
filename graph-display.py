@@ -60,4 +60,7 @@ if __name__ == "__main__":
         print(filepath)
         if filepath + ".png" in listdir("graph-images/"):
             continue
+        if filepath == "7862068":
+            # file too large and breaks
+            continue
         draw_graph(filepath)
